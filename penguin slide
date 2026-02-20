@@ -1,0 +1,115 @@
+// Player 1 controls (left side)
+let player1Lane = 1;
+let player1Y = 500;
+let player1VelocityY = 0;
+
+// Player 2 controls (right side)
+let player2Lane = 1;
+let player2Y = 500;
+let player2VelocityY = 0;
+
+document.addEventListener("keydown", (e) => {
+  // Player 1 Controls
+  if (e.key === "ArrowLeft" && player1Lane > 0) player1Lane--;
+  if (e.key === "ArrowRight" && player1Lane < 2) player1Lane++;
+  if (e.key === "ArrowUp" && player1Y === 500) {
+    player1VelocityY = -12;
+  }
+
+  // Player 2 Controls (WASD keys)
+  if (e.key === "a" && player2Lane > 0) player2Lane--;
+  if (e.key === "d" && player2Lane < 2) player2Lane++;
+  if (e.key === "w" && player2Y === 500) {
+    player2VelocityY = -12;
+  }
+});
+
+function drawPenguins() {
+  // Player 1 (Classic Penguin)
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(lanes[player1Lane] - 20, player1Y, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Player 2 (Red Scarf Penguin)
+  ctx.fillStyle = "red";
+  ctx.beginPath();
+  ctx.arc(lanes[player2Lane] + 20, player2Y, 20, 0, Math.PI * 2);
+  ctx.fill();
+}
+// Initialize Firebase (add your config)
+firebase.initializeApp({
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+});
+
+// Save score
+function saveScore(score) {
+  const scoresRef = firebase.database().ref("scores");
+  scoresRef.push().set({
+    score: score,
+    timestamp: Date.now(),
+  });
+}
+
+// Fetch scores
+function loadLeaderboard() {
+  const scoresRef = firebase.database().ref("scores");
+  scoresRef.orderByChild("timestamp").limitToLast(10).on("value", (snapshot) => {
+    const scores = snapshot.val();
+    // Display the scores
+  });
+}
+function drawPowerUps() {
+  powerUps.forEach((p, i) => {
+    ctx.fillStyle = p.type === "shield" ? "cyan" : "orange";
+    ctx.fillRect(lanes[p.lane] - 10, p.y, 20, 20);
+    p.y += gameSpeed;
+
+    if (p.lane === currentLane && p.y > penguinY - 20 && p.y < penguinY + 20) {
+      if (p.type === "shield") shield = true;
+      if (p.type === "speed") {
+        speedBoost = true;
+        gameSpeed = 10;
+        setTimeout(() => {
+          gameSpeed = 5;
+          speedBoost = false;
+        }, 3000);
+      }
+      powerSound.play();
+      powerUps.splice(i, 1);
+    }
+  });
+}
+function renderShop() {
+  let shopDiv = document.getElementById("shopItems");
+  shopDiv.innerHTML = "";
+  penguins.forEach((p) => {
+    let btn = document.createElement("button");
+    if (p.unlocked) {
+      btn.innerText = "Use " + p.name;
+      btn.onclick = () => (currentPenguin = p);
+    } else {
+      btn.innerText = "Unlock " + p.name + " (" + p.cost + " coins)";
+      btn.onclick = () => {
+        if (coinCount >= p.cost) {
+          coinCount -= p.cost;
+          p.unlocked = true;
+          renderShop();
+        }
+      };
+    }
+    shopDiv.appendChild(btn);
+  });
+}
+function spawnBossPenguin() {
+  if (score > 50 && !bossMode) {
+    bossMode = true;
+    // Create and animate the Boss Penguin (Big Boss)
+  }
+}
